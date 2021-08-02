@@ -1,28 +1,26 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 import shutil
 import glob
 import tarfile
+
 from PIL import Image
 
-def compressMe(file, verbose=False):
-    filepath = "./"+den+".den/"+file
+def compressMe(path, file, verbose=False):
+    filepath = path+file
     oldsize = os.stat(filepath).st_size
     picture = Image.open(filepath)
-    dim = picture.size
+    picture.save(path+"Compress/C"+file,"JPEG",optimize=True,quality=85)
     
-    #set quality= to the preferred quality. 
-    #I found that 85 has no difference in my 6-10mb files and that 65 is the lowest reasonable number
-    picture.save("./"+den+".den/C"+file,"JPEG",optimize=True,quality=85)
-    
-    newsize = os.stat("./"+den+".den/C"+file).st_size
+    newsize = os.stat(path+"Compress/C"+file).st_size
     percent = round((oldsize-newsize)/float(oldsize)*100)
-    if (verbose):
+    if verbose:
         print("Zmenšeno o {2}%".format(oldsize,newsize,percent))
     return percent
 
 def main(den):
-    path = os.getcwd()
-    filenames = os.walk(path)
     cislovani = 0
     try:
         os.mkdir("./"+den+".den/Compress")
@@ -45,13 +43,12 @@ def main(den):
                 print("Přeskok: "+jmeno)
 
             if not os.path.exists(path+"Compress/C"+jmeno):
-                compressMe(jmeno, True)
-                print("C"+jmeno+" -> "+path+"Compress/"+"C"+jmeno)
-                shutil.move(path+"/C"+jmeno, path+"Compress/"+"C"+jmeno)
+                compressMe(path, jmeno, True)
 
             tf.add(path+"Compress/"+"C"+jmeno, jmeno)
 
-input = input("Zadejte den, nebo dny ke zpracování. (Dny oddělujte čárkou bez mezer): \n")
+
+input = str(input("Zadejte den, nebo dny ke zpracování. (Dny oddělujte čárkou bez mezer): \n"))
 if "," in input:
     parsedInput = input.split(",")
     for den in parsedInput:
@@ -60,7 +57,7 @@ if "," in input:
 else:
     main(input)
 
+
 print("Hotovo! (Stikni ENTER pro ukončení programu)")
-input()
 
 
