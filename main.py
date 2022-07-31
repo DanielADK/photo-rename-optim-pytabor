@@ -2,21 +2,21 @@
 # -*- coding: utf-8 -*-
 
 import os
-import shutil
 import glob
 import tarfile
 import threading
 import progressbar
+from ConfigManager import Config
 
-from PIL import Image
+from PIL import Image, ImageOps
 
-THREADS = 12
+config = Config()
+config.load()
 
 
-def compressImage(path, file, verbose=False):
+def compressImage(path, file, picture, verbose=False):
     filepath = path + file
     oldsize = os.stat(filepath).st_size
-    picture = Image.open(filepath)
     picture.save(path + "Compress/C" + file, "JPEG", optimize=True, quality=85)
 
     newsize = os.stat(path + "Compress/C" + file).st_size
@@ -26,6 +26,9 @@ def compressImage(path, file, verbose=False):
         print("Zmenšeno o {2}%".format(oldsize, newsize, percent))
     return percent
 
+
+def autoContrastImage(picture):
+    return ImageOps.autocontrast(picture, cutoff=2, ignore=2)
 
 def process(den):
     while len(listOfFiles) != 0:
@@ -42,7 +45,9 @@ def process(den):
             # print("Přeskok: "+jmeno)
 
             if not os.path.exists(path + "Compress/C" + jmeno):
-                compressImage(path, jmeno)
+                picture = Image.open(path + jmeno)
+                picture = autoContrastImage(picture)
+                compressImage(path, jmeno, picture)
         bar.update(totalLenOfListOfFiles - len(listOfFiles))
 
 
@@ -88,7 +93,7 @@ for day in days:
     bar.start()
     barlen = 0
 
-    for i in range(THREADS):
+    for i in range(int(config.options["threads"])):
         t = threading.Thread(target=process, args=(day,))
         threads.append(t)
     for t in threads:
